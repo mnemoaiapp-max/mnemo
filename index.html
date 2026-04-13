@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mnemo — Reading Speed Assessment</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --green:rgb(90,197,153);--orange:rgb(233,169,68);--white:rgb(232,232,232);
+    --bg:#0c120e;--surface:#141a16;--surface2:#1c2620;--surface3:#243028;
+    --text:rgb(232,232,232);--text2:rgba(232,232,232,0.70);--text3:rgba(232,232,232,0.42);
+    --border:rgba(90,197,153,0.15);--border2:rgba(90,197,153,0.35);--danger:#e05252;
+  }
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:300;min-height:100vh;padding:0;line-height:1.7;}
+  .page{max-width:740px;margin:0 auto;padding:2rem 1.25rem;}
+  .pill{display:inline-flex;align-items:center;gap:6px;background:rgba(90,197,153,0.12);border:1px solid var(--border2);border-radius:999px;padding:4px 14px;font-size:0.76rem;color:var(--green);letter-spacing:0.07em;text-transform:uppercase;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0.75rem 2rem;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.95rem;font-weight:500;cursor:pointer;transition:all 0.18s;border:2px solid transparent;white-space:nowrap;}
+  .btn-primary{background:var(--green);color:#0c120e;border-color:var(--green);}
+  .btn-primary:hover{background:rgb(110,220,173);border-color:rgb(110,220,173);transform:translateY(-1px);}
+  .btn-primary:disabled{background:rgba(90,197,153,0.2);color:rgba(232,232,232,0.35);border-color:rgba(90,197,153,0.2);cursor:not-allowed;transform:none;}
+  .btn-ghost{background:transparent;border:1.5px solid rgba(232,232,232,0.25);color:var(--text2);}
+  .btn-ghost:hover{border-color:var(--green);color:var(--green);}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.75rem;}
+  .card2{background:var(--surface2);border:1px solid var(--border2);border-radius:12px;padding:1.25rem;}
+  input,select,textarea{background:var(--surface2);border:1.5px solid rgba(232,232,232,0.2);border-radius:8px;padding:0.7rem 1rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.95rem;width:100%;transition:border-color 0.15s;outline:none;}
+  input:focus,select:focus,textarea:focus{border-color:var(--green);}
+  select option{background:#1c2620;}
+  textarea{resize:vertical;min-height:80px;}
+  label{display:block;font-size:0.82rem;color:var(--text3);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:6px;}
+  .q-option{display:block;width:100%;text-align:left;background:var(--surface2);border:2px solid rgba(232,232,232,0.18);border-radius:10px;padding:0.85rem 1.25rem;color:var(--text);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.93rem;transition:all 0.14s;margin-bottom:0.55rem;}
+  .q-option:hover:not(.locked){border-color:rgba(232,232,232,0.5);background:var(--surface3);}
+  .q-option.selected{border-color:rgb(232,232,232);background:rgba(232,232,232,0.07);box-shadow:0 0 0 1px rgba(232,232,232,0.6);}
+  .q-option.correct{border-color:var(--green)!important;background:rgba(90,197,153,0.14)!important;color:var(--green)!important;box-shadow:none!important;}
+  .q-option.wrong{border-color:var(--danger)!important;background:rgba(224,82,82,0.1)!important;color:var(--danger)!important;box-shadow:none!important;}
+  .q-option.locked{cursor:default!important;}
+  .progress-bar{height:3px;background:var(--surface3);border-radius:999px;overflow:hidden;margin:1.25rem 0;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--orange));border-radius:999px;transition:width 0.4s ease;}
+  .rsvp-box{background:var(--surface2);border:1px solid var(--border2);border-radius:16px;padding:2rem;text-align:center;}
+  .rsvp-word-wrap{min-height:90px;display:flex;align-items:center;justify-content:center;}
+  .rsvp-word{font-family:'DM Serif Display',serif;font-size:3rem;letter-spacing:0.04em;line-height:1;}
+  .factor-bars{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:1rem;}
+  .factor-item{text-align:center;}
+  .factor-label{font-size:0.62rem;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px;}
+  .factor-track{height:3px;background:var(--surface3);border-radius:999px;overflow:hidden;}
+  .factor-fill{height:100%;border-radius:999px;transition:width 0.12s;}
+  .factor-val{font-size:0.68rem;color:var(--text2);margin-top:3px;}
+  .stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin:1.25rem 0;}
+  .stat-card{background:var(--surface2);border:1px solid var(--border2);border-radius:12px;padding:1rem;text-align:center;}
+  .stat-val{font-size:1.5rem;font-weight:500;color:var(--green);}
+  .stat-label{font-size:0.72rem;color:var(--text3);margin-top:4px;letter-spacing:0.05em;text-transform:uppercase;}
+  .step-dots{display:flex;gap:6px;justify-content:center;margin:0.75rem 0;}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--surface3);transition:background 0.3s;}
+  .dot.done{background:var(--green);}.dot.active{background:var(--orange);}
+  .legend{display:flex;gap:1rem;justify-content:center;align-items:center;font-size:0.74rem;color:var(--text3);margin-top:0.75rem;flex-wrap:wrap;}
+  .legend-dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:4px;}
+  .passage-wrap{position:relative;border-radius:14px;overflow:hidden;}
+  .passage-text{background:var(--surface2);border:1px solid var(--border2);border-radius:14px;padding:1.75rem 2rem;font-size:1rem;line-height:1.9;color:var(--text);transition:filter 0.4s;}
+  .passage-text.blurred{filter:blur(7px);user-select:none;pointer-events:none;}
+  .blur-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(12,18,14,0.55);border-radius:14px;z-index:2;}
+  .timer-big{font-family:'DM Serif Display',serif;font-size:2.8rem;color:var(--orange);text-align:center;font-variant-numeric:tabular-nums;line-height:1;}
+  .pct-bar-bg{height:10px;background:var(--surface3);border-radius:999px;margin-top:0.5rem;overflow:hidden;}
+  .pct-bar-fill{height:100%;border-radius:999px;transition:width 1.2s ease;}
+  .compliment{font-family:'DM Serif Display',serif;font-style:italic;font-size:1.25rem;color:var(--orange);line-height:1.5;padding:1.25rem 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center;margin:1.5rem 0;}
+  .likert{display:flex;gap:8px;justify-content:space-between;margin-top:8px;}
+  .likert-btn{flex:1;padding:0.6rem 0.25rem;border-radius:8px;border:1.5px solid rgba(232,232,232,0.2);background:var(--surface2);color:var(--text3);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.85rem;transition:all 0.14s;text-align:center;}
+  .likert-btn:hover{border-color:var(--green);color:var(--green);}
+  .likert-btn.active{border-color:var(--green);background:rgba(90,197,153,0.15);color:var(--green);font-weight:500;}
+  /* Cover */
+  .cover-hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:3rem 1.5rem;position:relative;overflow:hidden;}
+  .cover-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 30%,rgba(90,197,153,0.08) 0%,transparent 70%);pointer-events:none;}
+  .cover-title{font-family:'DM Serif Display',serif;font-size:clamp(2.8rem,8vw,5rem);font-weight:400;letter-spacing:-0.03em;line-height:1.05;margin-bottom:1.25rem;}
+  .cover-sub{font-size:1.05rem;color:var(--text2);max-width:480px;margin:0 auto 2.5rem;line-height:1.75;}
+  .cover-divider{width:40px;height:1px;background:var(--border2);margin:0 auto 2rem;}
+  .cover-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;max-width:520px;margin:0 auto 2.5rem;}
+  .cover-step{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem;text-align:left;}
+  .cover-step-num{font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--green);margin-bottom:0.4rem;}
+  .cover-step-title{font-size:0.88rem;font-weight:500;color:var(--text);margin-bottom:0.25rem;}
+  .cover-step-desc{font-size:0.78rem;color:var(--text3);line-height:1.5;}
+  .cover-stats{display:flex;gap:2rem;justify-content:center;flex-wrap:wrap;margin-bottom:2.5rem;}
+  .cover-stat-val{font-family:'DM Serif Display',serif;font-size:2.2rem;color:var(--green);line-height:1;}
+  .cover-stat-label{font-size:0.78rem;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;margin-top:4px;}
+  /* Admin */
+  #admin-panel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:1000;overflow-y:auto;padding:2rem 1rem;}
+  #admin-panel.open{display:block;}
+  .admin-box{max-width:1000px;margin:0 auto;background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:2rem;}
+  .admin-btn{position:fixed;top:1rem;right:1rem;z-index:999;background:rgba(20,26,22,0.92);border:1px solid var(--border2);color:var(--text3);border-radius:8px;padding:6px 12px;font-size:0.75rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;backdrop-filter:blur(8px);}
+  .admin-btn:hover{color:var(--green);border-color:var(--green);}
+  .admin-table-wrap{overflow-x:auto;margin-top:1rem;}
+  .admin-table{width:100%;border-collapse:collapse;font-size:0.8rem;}
+  .admin-table th{text-align:left;padding:0.5rem 0.75rem;color:var(--text3);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--border2);white-space:nowrap;}
+  .admin-table td{padding:0.6rem 0.75rem;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text2);}
+  .admin-table tr:hover td{background:rgba(90,197,153,0.04);}
+  .tag{display:inline-block;padding:2px 10px;border-radius:999px;font-size:0.72rem;font-weight:500;background:rgba(90,197,153,0.12);color:var(--green);border:1px solid rgba(90,197,153,0.3);}
+  .tag-orange{background:rgba(233,169,68,0.12);color:var(--orange);border-color:rgba(233,169,68,0.3);}
+  .save-status{font-size:0.78rem;padding:6px 12px;border-radius:6px;display:inline-block;margin-top:0.5rem;}
+  .save-ok{background:rgba(90,197,153,0.12);color:var(--green);}
+  .save-err{background:rgba(224,82,82,0.12);color:var(--danger);}
+  .screen{display:none;}.screen.active{display:block;}
+  .hidden{display:none!important;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .screen.active{animation:fadeIn 0.25s ease;}
+</style>
+</head>
+<body>
+
+<button class="admin-btn" onclick="toggleAdmin()">&#9670; Admin</button>
+
+<!-- ══════════════════════ ADMIN PANEL ══════════════════════ -->
+<div id="admin-panel">
+  <div class="admin-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+      <div>
+        <div style="font-family:'DM Serif Display',serif;font-size:1.6rem;margin-bottom:4px;">Mnemo Assessment Data</div>
+        <div style="font-size:0.85rem;color:var(--text3);" id="admin-subtitle">Sign in to view submissions</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-ghost" style="font-size:0.82rem;padding:0.5rem 1rem;" id="refresh-btn" onclick="loadAdminData()" style="display:none;">↻ Refresh</button>
+        <button class="btn btn-ghost" style="font-size:0.82rem;padding:0.5rem 1rem;" onclick="exportCSV()">Export CSV</button>
+        <button class="btn btn-ghost" style="font-size:0.82rem;padding:0.5rem 1rem;" onclick="toggleAdmin()">Close ✕</button>
+      </div>
+    </div>
+
+    <!-- Login -->
+    <div id="admin-login" class="card2" style="margin-bottom:1.5rem;max-width:420px;">
+      <div style="font-size:0.82rem;color:var(--text3);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.06em;">Admin access</div>
+      <div style="display:flex;gap:8px;">
+        <input type="password" id="admin-pw" placeholder="Enter admin password" style="flex:1;" onkeydown="if(event.key==='Enter')checkAdmin()">
+        <button class="btn btn-primary" style="padding:0.7rem 1.25rem;" onclick="checkAdmin()">Sign in</button>
+      </div>
+      <div id="admin-err" style="color:var(--danger);font-size:0.82rem;margin-top:6px;display:none;">Incorrect password.</div>
+    </div>
+
+    <div id="admin-data" style="display:none;">
+      <!-- Summary -->
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.75rem;margin-bottom:1.5rem;" id="admin-summary"></div>
+
+      <!-- Filters -->
+      <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;">
+        <select id="filter-edu" onchange="renderAdminTable()" style="width:auto;flex:1;min-width:140px;"><option value="">All education levels</option><option>High school</option><option>Some college</option><option>Bachelor's</option><option>Master's</option><option>Doctoral</option></select>
+        <select id="filter-field" onchange="renderAdminTable()" style="width:auto;flex:1;min-width:140px;"><option value="">All fields</option></select>
+        <select id="filter-goal" onchange="renderAdminTable()" style="width:auto;flex:1;min-width:140px;"><option value="">All goals</option><option>Study / academic work</option><option>Professional reading</option><option>Personal enrichment</option><option>News &amp; current events</option></select>
+      </div>
+
+      <!-- Main table -->
+      <div class="admin-table-wrap">
+        <table class="admin-table" id="admin-table">
+          <thead><tr><th>Date</th><th>Age</th><th>Education</th><th>Field</th><th>Goal</th><th>Baseline</th><th>Mnemo</th><th>Gain</th><th>Levels</th><th>Accuracy</th><th>Interest</th><th>Weight</th><th>Comprehend</th><th>Uses</th></tr></thead>
+          <tbody id="admin-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Open-ended responses -->
+      <div id="admin-open-ended" style="margin-top:2rem;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ COVER ══════════════════════ -->
+<div id="screen-cover" class="screen active">
+  <div class="cover-hero">
+    <div class="pill" style="margin-bottom:1.5rem;">Mnemo · Reading Intelligence</div>
+    <div class="cover-title">Discover how fast<br>your mind can <em style="color:var(--green);">actually</em> read</div>
+    <p class="cover-sub">A research-grade assessment that measures your natural reading speed, tests comprehension at escalating pace, and shows you exactly how much time you could reclaim every day.</p>
+    <div class="cover-divider"></div>
+    <div class="cover-steps">
+      <div class="cover-step"><div class="cover-step-num">①</div><div class="cover-step-title">About you</div><div class="cover-step-desc">Quick background so we can personalize your results</div></div>
+      <div class="cover-step"><div class="cover-step-num">②</div><div class="cover-step-title">Timed baseline</div><div class="cover-step-desc">Read a passage naturally — we clock your real WPM</div></div>
+      <div class="cover-step"><div class="cover-step-num">③</div><div class="cover-step-title">RSVP levels</div><div class="cover-step-desc">7 escalating speeds with comprehension checks after each</div></div>
+    </div>
+    <div class="cover-stats">
+      <div class="cover-stat"><div class="cover-stat-val">~8</div><div class="cover-stat-label">minutes total</div></div>
+      <div class="cover-stat" style="border-left:1px solid var(--border);border-right:1px solid var(--border);padding:0 2rem;"><div class="cover-stat-val">7</div><div class="cover-stat-label">RSVP stages</div></div>
+      <div class="cover-stat"><div class="cover-stat-val">0</div><div class="cover-stat-label">sign-up required</div></div>
+    </div>
+    <button class="btn btn-primary" style="font-size:1.05rem;padding:1rem 3rem;box-shadow:0 0 40px rgba(90,197,153,0.4);" onclick="show('screen-about')">Take the test now &rarr;</button>
+    <p style="font-size:0.78rem;color:var(--text3);margin-top:0.75rem;">Your data is anonymous and used only to improve Mnemo.</p>
+  </div>
+</div>
+
+<!-- ══════════════════════ ABOUT ══════════════════════ -->
+<div id="screen-about" class="screen"><div class="page">
+  <div style="margin-bottom:2rem;"><div class="pill" style="margin-bottom:1rem;">STEP 1 OF 4</div><div style="font-family:'DM Serif Display',serif;font-size:2.2rem;line-height:1.2;margin-bottom:0.75rem;">Tell us about <em style="color:var(--green);">you</em></div><p style="color:var(--text2);font-size:0.93rem;">This helps us contextualize your results and understand which readers benefit most from adaptive reading technology.</p></div>
+  <div style="display:grid;gap:1.25rem;">
+    <div class="card"><div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;"><div><label>Age</label><input type="number" id="ab-age" placeholder="e.g. 21" min="13" max="80"></div><div><label>Education level</label><select id="ab-edu"><option value="">Select...</option><option>High school</option><option>Some college</option><option>Bachelor's</option><option>Master's</option><option>Doctoral</option></select></div></div></div>
+    <div class="card"><div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;"><div><label>Field of work or study</label><select id="ab-field"><option value="">Select...</option><option>Business / Finance</option><option>Engineering / Tech</option><option>Medicine / Health</option><option>Law</option><option>Sciences</option><option>Humanities / Social Sciences</option><option>Arts / Design / Media</option><option>Education</option><option>Other</option></select></div><div><label>Daily reading volume</label><select id="ab-wpd" onchange="updateWpdExample()"><option value="">Select...</option><option value="500">Under 1,000 — casual browsing</option><option value="2500">1,000–5,000 — news &amp; email</option><option value="7500">5,000–10,000 — heavy email + articles</option><option value="15000">10,000–20,000 — research &amp; reports</option><option value="25000">20,000+ — legal, academic, dense content</option></select><div id="wpd-example" style="font-size:0.79rem;color:var(--text3);margin-top:6px;line-height:1.5;"></div></div></div></div>
+    <div class="card"><label>Primary reading goal</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;"><button class="q-option" id="goal-btn-0" onclick="selectGoal('Study / academic work',0)">Study / academic work</button><button class="q-option" id="goal-btn-1" onclick="selectGoal('Professional reading',1)">Professional reading</button><button class="q-option" id="goal-btn-2" onclick="selectGoal('Personal enrichment',2)">Personal enrichment</button><button class="q-option" id="goal-btn-3" onclick="selectGoal('News &amp; current events',3)">News &amp; current events</button></div></div>
+  </div>
+  <div id="about-err" style="color:var(--danger);font-size:0.85rem;margin-top:0.75rem;display:none;">Please complete all fields before continuing.</div>
+  <div style="margin-top:1.5rem;text-align:center;"><button class="btn btn-primary" style="font-size:1rem;padding:0.9rem 2.75rem;" onclick="submitAbout()">Continue &rarr;</button></div>
+</div></div>
+
+<!-- ══════════════════════ INTRO ══════════════════════ -->
+<div id="screen-intro" class="screen"><div class="page">
+  <div style="text-align:center;padding:1.5rem 0 2.5rem;">
+    <div class="pill" style="margin-bottom:1.5rem;">STEP 2 OF 4 — ASSESSMENT OVERVIEW</div>
+    <div style="font-family:'DM Serif Display',serif;font-size:2.4rem;line-height:1.2;margin-bottom:1.25rem;">How fast can<br><em style="color:var(--green);">you</em><span style="color:var(--white);"> read?</span></div>
+    <p style="color:var(--text2);max-width:460px;margin:0 auto 2rem;font-size:0.97rem;">First we time your natural reading speed. Then we push your limits with Mnemo's adaptive RSVP display — each word shown for exactly the time it deserves.</p>
+    <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:14px;padding:1.25rem;max-width:380px;margin:0 auto 2rem;"><div style="font-size:0.68rem;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.85rem;">Mnemo weighting formula</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;text-align:center;"><div><div style="font-size:1.4rem;font-weight:600;color:var(--green);">40%</div><div style="font-size:0.75rem;color:var(--text2);">Word length</div></div><div><div style="font-size:1.4rem;font-weight:600;color:var(--orange);">35%</div><div style="font-size:0.75rem;color:var(--text2);">Text necessity</div></div><div><div style="font-size:1.4rem;font-weight:600;color:var(--white);">25%</div><div style="font-size:0.75rem;color:var(--text2);">Punctuation</div></div></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;max-width:380px;margin:0 auto 2.5rem;"><div class="stat-card"><div class="stat-val">8</div><div class="stat-label">sections</div></div><div class="stat-card"><div class="stat-val">4</div><div class="stat-label">Q's each</div></div><div class="stat-card"><div class="stat-val">~8</div><div class="stat-label">minutes</div></div></div>
+    <button class="btn btn-primary" style="font-size:1rem;padding:0.9rem 2.75rem;" onclick="show('screen-baseline')">Begin Assessment &rarr;</button>
+  </div>
+</div></div>
+
+<!-- ══════════════════════ BASELINE READ ══════════════════════ -->
+<div id="screen-baseline" class="screen"><div class="page">
+  <div style="margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;"><div class="pill">BASELINE READ</div><div style="font-size:0.83rem;color:var(--text3);">Phase 1 — Natural reading speed</div></div>
+  <p style="color:var(--text2);font-size:0.88rem;margin-bottom:1.25rem;">The passage below is blurred until you're ready. Click <strong style="color:var(--text);">Start reading</strong> to reveal it and start the timer. Click <strong style="color:var(--text);">Done</strong> when you finish.</p>
+  <div class="passage-wrap"><div class="passage-text blurred" id="baseline-passage"></div><div class="blur-overlay" id="blur-overlay"><button class="btn btn-primary" style="font-size:1rem;padding:0.85rem 2.25rem;box-shadow:0 0 24px rgba(90,197,153,0.4);" onclick="startBaselineTimer()">Start reading &rarr;</button></div></div>
+  <div id="baseline-timing" class="hidden" style="text-align:center;margin-top:1.5rem;"><div class="timer-big" id="baseline-timer">0.0s</div><p style="color:var(--text3);font-size:0.85rem;margin:0.5rem 0 1.25rem;">Reading — click Done when you finish</p><button class="btn btn-primary" style="padding:0.85rem 2.5rem;" onclick="stopBaselineTimer()">Done reading &rarr;</button></div>
+</div></div>
+
+<!-- ══════════════════════ BASELINE QUIZ ══════════════════════ -->
+<div id="screen-baseline-quiz" class="screen"><div class="page">
+  <div style="margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;"><div class="pill">COMPREHENSION CHECK</div><div style="font-size:0.83rem;color:var(--text3);">Baseline — natural reading</div></div>
+  <div class="card2" style="margin-bottom:1.5rem;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;"><div style="text-align:center;"><div style="font-size:1.8rem;font-weight:500;color:var(--orange);" id="baseline-wpm-display">—</div><div style="font-size:0.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;">natural WPM</div></div><div style="flex:1;font-size:0.88rem;color:var(--text2);" id="baseline-wpm-context"></div></div>
+  <div id="baseline-quiz-questions"></div>
+  <div style="text-align:center;margin-top:1.5rem;" id="baseline-submit-wrap"><p style="font-size:0.83rem;color:var(--text3);margin-bottom:0.75rem;" id="baseline-answer-hint">Answer all 4 questions to continue</p><button class="btn btn-primary" id="baseline-submit-btn" onclick="submitBaselineQuiz()" disabled>Submit &amp; start RSVP test &rarr;</button></div>
+  <div id="baseline-feedback" class="card2 hidden" style="margin-top:1.5rem;"><div id="baseline-score" style="font-size:1.05rem;font-weight:500;margin-bottom:0.4rem;"></div><div id="baseline-msg" style="color:var(--text2);font-size:0.88rem;margin-bottom:1rem;"></div><button class="btn btn-primary" onclick="show('screen-transition')">Begin RSVP test &rarr;</button></div>
+</div></div>
+
+<!-- ══════════════════════ TRANSITION ══════════════════════ -->
+<div id="screen-transition" class="screen"><div class="page">
+  <div style="text-align:center;padding:2.5rem 0;">
+    <div class="pill" style="margin-bottom:1.25rem;">RSVP TEST STARTING</div>
+    <div style="font-family:'DM Serif Display',serif;font-size:2rem;margin-bottom:1rem;line-height:1.3;">Now we push your limits<br>with <em style="color:var(--green);">Mnemo RSVP</em></div>
+    <p style="color:var(--text2);max-width:420px;margin:0 auto 1.5rem;font-size:0.93rem;">Words flash one at a time — slower on key terms, faster on filler. You need <strong style="color:var(--text);">3 out of 4</strong> correct to advance.</p>
+    <div class="legend" style="margin-bottom:2rem;"><span><span class="legend-dot" style="background:rgba(232,232,232,0.35);"></span>filler — white</span><span><span class="legend-dot" style="background:var(--orange);"></span>moderate — orange</span><span><span class="legend-dot" style="background:var(--green);"></span>key term — green</span></div>
+    <button class="btn btn-primary" style="padding:0.9rem 2.5rem;font-size:1rem;box-shadow:0 0 24px rgba(90,197,153,0.35);" onclick="startRSVP()">Start at 250 WPM &rarr;</button>
+  </div>
+</div></div>
+
+<!-- ══════════════════════ RSVP READ ══════════════════════ -->
+<div id="screen-read" class="screen"><div class="page">
+  <div style="margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;"><div class="pill" id="read-wpm-pill">250 WPM</div><div style="font-size:0.83rem;color:var(--text3);" id="read-level-label">Level 1 of 7</div></div>
+  <div class="progress-bar"><div class="progress-fill" id="main-progress" style="width:0%"></div></div>
+  <div class="step-dots" id="step-dots"></div>
+  <div class="rsvp-box" style="margin:1.75rem 0;">
+    <div style="font-size:0.7rem;color:var(--text3);margin-bottom:0.75rem;letter-spacing:0.08em;text-transform:uppercase;">Focus here</div>
+    <div class="rsvp-word-wrap"><div class="rsvp-word" id="rsvp-word">—</div></div>
+    <div class="factor-bars" style="margin-top:1.25rem;">
+      <div class="factor-item"><div class="factor-label">Length (40%)</div><div class="factor-track"><div class="factor-fill" id="bar-length" style="width:0%;background:var(--green);"></div></div><div class="factor-val" id="val-length">—</div></div>
+      <div class="factor-item"><div class="factor-label">Necessity (35%)</div><div class="factor-track"><div class="factor-fill" id="bar-nec" style="width:0%;background:var(--orange);"></div></div><div class="factor-val" id="val-nec">—</div></div>
+      <div class="factor-item"><div class="factor-label">Punctuation (25%)</div><div class="factor-track"><div class="factor-fill" id="bar-punc" style="width:0%;background:var(--white);"></div></div><div class="factor-val" id="val-punc">—</div></div>
+    </div>
+    <div style="margin-top:0.75rem;display:flex;justify-content:center;gap:2rem;font-size:0.83rem;color:var(--text3);"><span id="rsvp-counter">0/0</span><span id="rsvp-timer" style="font-variant-numeric:tabular-nums;">0.0s</span></div>
+  </div>
+  <div class="legend"><span><span class="legend-dot" style="background:rgba(232,232,232,0.35);"></span>low weight</span><span><span class="legend-dot" style="background:var(--orange);"></span>moderate</span><span><span class="legend-dot" style="background:var(--green);"></span>high weight</span></div>
+  <div id="read-countdown" class="hidden" style="text-align:center;padding:1.25rem 0;"><p style="font-size:2.5rem;font-weight:600;color:var(--green);" id="countdown-num">3</p><p style="color:var(--text3);">Get ready...</p></div>
+</div></div>
+
+<!-- ══════════════════════ RSVP QUIZ ══════════════════════ -->
+<div id="screen-quiz" class="screen"><div class="page">
+  <div style="margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;"><div class="pill">COMPREHENSION CHECK</div><div style="font-size:0.83rem;color:var(--text3);" id="quiz-level-label">Level 1 — 250 WPM</div></div>
+  <div class="progress-bar"><div class="progress-fill" id="quiz-progress" style="width:0%"></div></div>
+  <div style="font-size:0.8rem;color:var(--text3);text-align:center;margin-bottom:1rem;">Need 3 / 4 correct to advance</div>
+  <div id="quiz-questions"></div>
+  <div style="text-align:center;margin-top:1.25rem;" id="submit-wrap"><p style="font-size:0.83rem;color:var(--text3);margin-bottom:0.75rem;" id="answer-hint">Answer all 4 questions to continue</p><button class="btn btn-primary" id="submit-quiz-btn" onclick="submitQuiz()" disabled>Submit answers &rarr;</button></div>
+  <div id="quiz-feedback" class="card2 hidden" style="margin-top:1.5rem;"><div id="feedback-score" style="font-size:1.05rem;font-weight:500;margin-bottom:0.4rem;"></div><div id="feedback-msg" style="color:var(--text2);font-size:0.88rem;margin-bottom:1rem;"></div><button class="btn btn-primary" id="next-btn">Continue &rarr;</button></div>
+</div></div>
+
+<!-- ══════════════════════ FEEDBACK ══════════════════════ -->
+<div id="screen-feedback" class="screen"><div class="page">
+  <div style="margin-bottom:1.5rem;"><div class="pill" style="margin-bottom:0.75rem;">STEP 3 OF 4 — QUICK FEEDBACK</div><div style="font-family:'DM Serif Display',serif;font-size:1.9rem;margin-bottom:0.5rem;">One last thing</div><p style="color:var(--text2);font-size:0.9rem;">Help us understand how Mnemo fits into your life.</p></div>
+  <div style="display:grid;gap:1.25rem;">
+    <div class="card"><label>How likely are you to use a tool like Mnemo?</label><div class="likert" id="likert-use"><button class="likert-btn" onclick="setLikert('use',1,this)">1<br><span style="font-size:0.7rem;">Not at all</span></button><button class="likert-btn" onclick="setLikert('use',2,this)">2</button><button class="likert-btn" onclick="setLikert('use',3,this)">3</button><button class="likert-btn" onclick="setLikert('use',4,this)">4</button><button class="likert-btn" onclick="setLikert('use',5,this)">5<br><span style="font-size:0.7rem;">Definitely</span></button></div></div>
+    <div class="card"><label>How accurate did the word weighting feel? (1 = way off, 5 = spot-on)</label><div class="likert" id="likert-weight"><button class="likert-btn" onclick="setLikert('weight',1,this)">1<br><span style="font-size:0.7rem;">Way off</span></button><button class="likert-btn" onclick="setLikert('weight',2,this)">2</button><button class="likert-btn" onclick="setLikert('weight',3,this)">3</button><button class="likert-btn" onclick="setLikert('weight',4,this)">4</button><button class="likert-btn" onclick="setLikert('weight',5,this)">5<br><span style="font-size:0.7rem;">Spot-on</span></button></div></div>
+    <div class="card"><label>How well could you comprehend the text? (1 = lost, 5 = fully clear)</label><div class="likert" id="likert-comprehend"><button class="likert-btn" onclick="setLikert('comprehend',1,this)">1<br><span style="font-size:0.7rem;">Lost</span></button><button class="likert-btn" onclick="setLikert('comprehend',2,this)">2</button><button class="likert-btn" onclick="setLikert('comprehend',3,this)">3</button><button class="likert-btn" onclick="setLikert('comprehend',4,this)">4</button><button class="likert-btn" onclick="setLikert('comprehend',5,this)">5<br><span style="font-size:0.7rem;">Fully clear</span></button></div></div>
+    <div class="card"><label>What would you primarily use it for? (select all that apply)</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;"><button class="q-option" onclick="toggleUseFor(this,'Coursework / textbooks')">Coursework / textbooks</button><button class="q-option" onclick="toggleUseFor(this,'Research papers')">Research papers</button><button class="q-option" onclick="toggleUseFor(this,'Work emails &amp; reports')">Work emails &amp; reports</button><button class="q-option" onclick="toggleUseFor(this,'News &amp; articles')">News &amp; articles</button><button class="q-option" onclick="toggleUseFor(this,'Books')">Books</button><button class="q-option" onclick="toggleUseFor(this,'Other')">Other</button></div></div>
+    <div class="card"><div style="display:grid;gap:1rem;"><div><label>What worked well?</label><textarea id="fb-good" placeholder="What did you enjoy or find effective?"></textarea></div><div><label>What didn't work?</label><textarea id="fb-bad" placeholder="What felt off, confusing, or frustrating?"></textarea></div></div></div>
+  </div>
+  <div id="save-status-msg" style="text-align:center;margin-top:0.75rem;"></div>
+  <div style="text-align:center;margin-top:1rem;"><button class="btn btn-primary" style="font-size:1rem;padding:0.9rem 2.75rem;" onclick="submitFeedbackAndShow()">See my results &rarr;</button></div>
+</div></div>
+
+<!-- ══════════════════════ RESULTS ══════════════════════ -->
+<div id="screen-result" class="screen"><div class="page">
+  <div style="text-align:center;margin-bottom:2rem;"><div class="pill" style="margin-bottom:0.75rem;">ASSESSMENT COMPLETE</div><div style="font-family:'DM Serif Display',serif;font-size:3.2rem;font-weight:400;color:var(--green);line-height:1;" id="result-wpm">—</div><div style="font-size:1rem;color:var(--text2);margin-top:0.5rem;">Mnemo WPM ceiling</div></div>
+  <div class="card2" style="margin-bottom:1.25rem;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;text-align:center;"><div><div style="font-size:0.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Natural reading</div><div style="font-size:1.75rem;font-weight:500;color:var(--orange);" id="r-baseline-wpm">—</div><div style="font-size:0.73rem;color:var(--text3);">WPM baseline</div></div><div><div style="font-size:0.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">With Mnemo</div><div style="font-size:1.75rem;font-weight:500;color:var(--green);" id="r-rsvp-wpm">—</div><div style="font-size:0.73rem;color:var(--text3);">RSVP ceiling</div></div></div>
+    <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:1rem;text-align:center;"><div><div style="font-size:0.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Times faster with Mnemo</div><div style="font-size:1.9rem;font-weight:500;color:var(--green);" id="r-multiplier">—</div></div><div><div style="font-size:0.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Hrs / week freed</div><div style="font-size:1.9rem;font-weight:500;color:var(--orange);" id="r-week">—</div></div></div>
+  </div>
+  <div class="compliment" id="result-compliment"></div>
+  <div class="stat-row"><div class="stat-card"><div class="stat-val" id="r-levels">—</div><div class="stat-label">levels passed</div></div><div class="stat-card"><div class="stat-val" id="r-accuracy">—</div><div class="stat-label">avg accuracy</div></div><div class="stat-card"><div class="stat-val" id="r-year">—</div><div class="stat-label">days/year back</div></div></div>
+  <div class="card" style="margin-top:1rem;border-color:var(--border2);">
+    <div style="font-size:0.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1rem;">Reading speed percentile</div>
+    <div style="margin-bottom:1rem;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="font-size:0.82rem;color:var(--text2);">Without Mnemo</span><span style="font-size:0.9rem;font-weight:500;color:var(--orange);" id="r-pct-linear">—</span></div><div class="pct-bar-bg"><div class="pct-bar-fill" id="r-pct-bar-linear" style="width:0%;background:var(--orange);"></div></div></div>
+    <div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="font-size:0.82rem;color:var(--text2);">With Mnemo</span><span style="font-size:0.9rem;font-weight:500;color:var(--green);" id="r-pct-mnemo">—</span></div><div class="pct-bar-bg"><div class="pct-bar-fill" id="r-pct-bar-mnemo" style="width:0%;background:var(--green);"></div></div></div>
+    <p style="font-size:0.78rem;color:var(--text3);margin-top:0.75rem;">Both bars reflect linear reading speed norms. Mnemo's display optimizations reduce friction without changing the semantic content you process.</p>
+  </div>
+  <div class="card" style="margin-top:1rem;"><div style="font-size:0.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.6rem;">Your Mnemo calibration</div><p style="color:var(--text2);font-size:0.93rem;" id="r-mnemo-desc"></p></div>
+  <div style="text-align:center;margin-top:2rem;"><button class="btn btn-primary" style="font-size:1rem;padding:0.9rem 2.5rem;" onclick="location.reload()">Retake assessment</button><p style="font-size:0.78rem;color:var(--text3);margin-top:0.75rem;">Your results have been saved to the Mnemo database.</p></div>
+</div></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// SUPABASE CONFIG — replace these two values with yours
+// ═══════════════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://vzmlguwxkziderzvgcbe.supabase.co';        // e.g. https://abcxyz.supabase.co
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6bWxndXd4a3ppZGVyenZnY2JlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMzU3NDQsImV4cCI6MjA5MTYxMTc0NH0.Qal9FMJj1_k8qIRfsFBczHrRxU58GL29UgPoB-tLMsM'; // long string starting with eyJ...
+const SUPABASE_TABLE = 'submissions';
+
+// ── SUPABASE HELPERS ──────────────────────────────────────────
+async function supabaseInsert(record) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify(record)
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error('Supabase insert failed: ' + err);
+  }
+  return true;
+}
+
+async function supabaseFetch(filters = '') {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=*&order=created_at.desc${filters}`, {
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+    }
+  });
+  if (!res.ok) throw new Error('Supabase fetch failed: ' + await res.text());
+  return res.json();
+}
+
+// ── ADMIN ─────────────────────────────────────────────────────
+const ADMIN_PASS = 'mnemo2026'; // ← change this to something strong
+let adminUnlocked = false;
+let allSubs = [];
+
+function toggleAdmin() {
+  const p = document.getElementById('admin-panel');
+  p.classList.toggle('open');
+  if (p.classList.contains('open') && adminUnlocked) loadAdminData();
+}
+
+function checkAdmin() {
+  if (document.getElementById('admin-pw').value === ADMIN_PASS) {
+    adminUnlocked = true;
+    document.getElementById('admin-login').style.display = 'none';
+    document.getElementById('admin-data').style.display = 'block';
+    document.getElementById('refresh-btn').style.display = 'inline-flex';
+    loadAdminData();
+  } else {
+    document.getElementById('admin-err').style.display = 'block';
+  }
+}
+
+async function loadAdminData() {
+  document.getElementById('admin-subtitle').textContent = 'Loading from Supabase...';
+  try {
+    allSubs = await supabaseFetch();
+    document.getElementById('admin-subtitle').textContent = allSubs.length + ' total submission' + (allSubs.length !== 1 ? 's' : '') + ' — live from Supabase';
+    renderSummary(allSubs);
+    populateFilters(allSubs);
+    renderAdminTable();
+    renderOpenEnded(allSubs);
+  } catch(e) {
+    document.getElementById('admin-subtitle').textContent = '⚠ Error: ' + e.message + ' — check your Supabase URL and key';
+  }
+}
+
+function renderSummary(s) {
+  const avg = (arr, key) => arr.length ? Math.round(arr.reduce((a,x) => a+(x[key]||0),0)/arr.length) : '—';
+  const avgF = (arr, key) => arr.filter(x=>x[key]>0).length ? (arr.filter(x=>x[key]>0).reduce((a,x)=>a+x[key],0)/arr.filter(x=>x[key]>0).length).toFixed(1) : '—';
+  const cards = [
+    {val:s.length, label:'Submissions'},
+    {val:avg(s,'baseline_wpm')||'—', label:'Avg baseline WPM'},
+    {val:avg(s.filter(x=>x.best_wpm>0),'best_wpm')||'—', label:'Avg Mnemo WPM'},
+    {val:avgF(s,'likely_use')+'/5', label:'Avg interest'},
+    {val:avgF(s,'weight_accuracy')+'/5', label:'Avg weight accuracy'}
+  ];
+  document.getElementById('admin-summary').innerHTML = cards.map(c =>
+    `<div class="stat-card"><div class="stat-val">${c.val}</div><div class="stat-label">${c.label}</div></div>`
+  ).join('');
+}
+
+function populateFilters(s) {
+  const fields = [...new Set(s.map(x=>x.field).filter(Boolean))];
+  document.getElementById('filter-field').innerHTML = '<option value="">All fields</option>' + fields.map(f=>`<option>${f}</option>`).join('');
+}
+
+function renderAdminTable() {
+  const edu = document.getElementById('filter-edu')?.value||'';
+  const field = document.getElementById('filter-field')?.value||'';
+  const goal = document.getElementById('filter-goal')?.value||'';
+  const s = allSubs.filter(x => (!edu||x.education===edu) && (!field||x.field===field) && (!goal||x.goal===goal));
+  const tbody = document.getElementById('admin-tbody');
+  if (!s.length) { tbody.innerHTML = '<tr><td colspan="14" style="color:var(--text3);padding:1rem;">No submissions match filters.</td></tr>'; return; }
+  tbody.innerHTML = s.map(x => {
+    const gain = x.best_wpm && x.baseline_wpm ? (x.best_wpm/x.baseline_wpm).toFixed(1)+'×' : '—';
+    return `<tr>
+      <td style="color:var(--text3);white-space:nowrap">${x.date||'—'}</td>
+      <td>${x.age||'—'}</td>
+      <td>${x.education||'—'}</td>
+      <td>${x.field||'—'}</td>
+      <td style="font-size:0.75rem">${x.goal||'—'}</td>
+      <td><span class="tag tag-orange">${x.baseline_wpm||'?'}</span></td>
+      <td><span class="tag">${x.best_wpm||'—'}</span></td>
+      <td style="color:var(--green);font-weight:500">${gain}</td>
+      <td>${x.levels_passed||0}</td>
+      <td>${x.avg_accuracy||0}%</td>
+      <td style="color:var(--green)">${x.likely_use||'—'}/5</td>
+      <td>${x.weight_accuracy||'—'}/5</td>
+      <td>${x.comprehend_rating||'—'}/5</td>
+      <td style="font-size:0.75rem;color:var(--text3)">${x.used_for||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderOpenEnded(s) {
+  const wf = s.filter(x => x.what_worked || x.what_didnt);
+  const el = document.getElementById('admin-open-ended');
+  if (!wf.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div style="font-size:0.8rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">Open-ended responses (${wf.length})</div>
+    ${wf.map(x => `
+      <div class="card2" style="margin-bottom:0.75rem;">
+        <div style="font-size:0.75rem;color:var(--text3);margin-bottom:0.5rem;">${x.age||'?'} · ${x.field||'?'} · ${x.education||'?'} · W:${x.weight_accuracy||'?'}/5 · C:${x.comprehend_rating||'?'}/5 · ${x.date||'?'}</div>
+        ${x.what_worked ? `<div style="margin-bottom:0.4rem;"><span style="color:var(--green);font-size:0.78rem;">✓ Worked: </span><span style="font-size:0.88rem;color:var(--text2)">${x.what_worked}</span></div>` : ''}
+        ${x.what_didnt ? `<div><span style="color:var(--danger);font-size:0.78rem;">✗ Didn't: </span><span style="font-size:0.88rem;color:var(--text2)">${x.what_didnt}</span></div>` : ''}
+      </div>`).join('')}`;
+}
+
+function exportCSV() {
+  if (!allSubs.length) return;
+  const h = ['date','age','education','field','goal','wpd_range','baseline_wpm','best_wpm','levels_passed','avg_accuracy','likely_use','weight_accuracy','comprehend_rating','used_for','what_worked','what_didnt'];
+  const rows = allSubs.map(s => h.map(k => '"'+String(s[k]||'').replace(/"/g,'""')+'"').join(','));
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent([h.join(','), ...rows].join('\n'));
+  a.download = 'mnemo_results_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
+// ── ABOUT ─────────────────────────────────────────────────────
+const WPD_EX = {'500':'A few social media feeds and a short article — very light daily reading.','2500':'About 8–10 emails, a couple news articles, and regular messaging.','7500':'A full academic article plus a dozen detailed emails — a moderately heavy day.','15000':'Two research papers or a textbook chapter alongside standard work correspondence.','25000':'The pace of lawyers reviewing briefs, analysts reading reports, or PhD students in heavy reading phases.'};
+let aboutData = {}, selectedGoal = '';
+function updateWpdExample(){const v=document.getElementById('ab-wpd').value;document.getElementById('wpd-example').textContent=WPD_EX[v]||'';}
+function selectGoal(g,i){selectedGoal=g;document.querySelectorAll('[id^="goal-btn-"]').forEach(b=>b.classList.remove('selected'));document.getElementById('goal-btn-'+i).classList.add('selected');}
+function submitAbout(){
+  const age=document.getElementById('ab-age').value,edu=document.getElementById('ab-edu').value,field=document.getElementById('ab-field').value,wpd=document.getElementById('ab-wpd').value;
+  if(!age||!edu||!field||!wpd||!selectedGoal){document.getElementById('about-err').style.display='block';return;}
+  document.getElementById('about-err').style.display='none';
+  aboutData={age:parseInt(age),education:edu,field,wpd_range:wpd,goal:selectedGoal};
+  show('screen-intro');
+}
+
+// ── CONSTANTS ─────────────────────────────────────────────────
+const PUNC={'.':1.0,'!':1.0,'?':1.0,';':0.7,':':0.55,',':0.3,'-':0.15};
+const PCT_MAP={100:{pct:12,label:'Top 88%'},150:{pct:22,label:'Top 78%'},200:{pct:42,label:'Top 58%'},250:{pct:62,label:'Top 38%'},300:{pct:73,label:'Top 27%'},400:{pct:84,label:'Top 16%'},500:{pct:91,label:'Top 9%'},650:{pct:96,label:'Top 4%'},800:{pct:98,label:'Top 2%'},1000:{pct:99.3,label:'Top 0.7%'}};
+function getPct(wpm){const ks=Object.keys(PCT_MAP).map(Number).sort((a,b)=>a-b);for(let i=ks.length-1;i>=0;i--)if(wpm>=ks[i])return PCT_MAP[ks[i]];return PCT_MAP[100];}
+function wColor(s){if(s<0.45)return 'rgba(232,232,232,0.55)';if(s<0.72)return 'rgb(233,169,68)';return 'rgb(90,197,153)';}
+function getAnchorIdx(word){const narrow=new Set(['i','l','j','f','r','t','I','!',':',';','|']);const wide=new Set(['m','w','M','W']);let widths=[];for(const ch of word)widths.push(narrow.has(ch)?0.35:wide.has(ch)?1.1:0.6);const total=widths.reduce((a,b)=>a+b,0);let acc=0;for(let i=0;i<widths.length;i++){acc+=widths[i];if(acc>=total/2)return i;}return Math.floor(word.length/2);}
+function renderWordHTML(word,score){const color=wColor(score);const ai=getAnchorIdx(word);let h='';for(let i=0;i<word.length;i++)h+=i===ai?`<span style="color:rgb(232,232,232);font-weight:400;">${word[i]}</span>`:`<span style="color:${color};">${word[i]}</span>`;return h;}
+
+// ── BASELINE ──────────────────────────────────────────────────
+const BASELINE_TEXT=`The modern reader faces a paradox: more information is available than at any point in history, yet the average time spent on any single piece of content continues to shrink. Researchers at Microsoft found that the average human attention span dropped from twelve seconds in 2000 to eight seconds by 2015 — shorter than that of a goldfish. This is not evidence of declining intelligence, but rather a rational adaptation to an environment of relentless input. The brain learns to filter aggressively, skimming surfaces rather than diving deep, because depth carries a cost in time and cognitive energy. The question facing students, professionals, and lifelong learners is not whether to read more, but how to read faster without sacrificing the comprehension that makes reading worthwhile in the first place.`;
+const BASELINE_WC=108;
+const BASELINE_Q=[{q:"What did Microsoft researchers find about attention spans between 2000 and 2015?",options:["A) They remained stable","B) They improved due to digital training","C) They dropped from 12 to 8 seconds","D) They declined only in teenagers"],answer:"C"},{q:"How does the passage describe the brain's response to information overload?",options:["A) A sign of declining intelligence","B) A rational adaptation through aggressive filtering","C) A medical condition","D) A temporary phase"],answer:"B"},{q:"What does the passage argue is the real question for modern readers?",options:["A) Whether to read less but more carefully","B) Whether digital reading is inferior to print","C) How to read faster without losing comprehension","D) How to improve memory retention"],answer:"C"},{q:"What does the author suggest skimming reflects?",options:["A) Laziness","B) Poor academic habits","C) Declining educational standards","D) A cost-benefit calculation about time and cognitive energy"],answer:"D"}];
+document.getElementById('baseline-passage').textContent=BASELINE_TEXT;
+function startBaselineTimer(){document.getElementById('blur-overlay').style.display='none';document.getElementById('baseline-passage').classList.remove('blurred');document.getElementById('baseline-timing').classList.remove('hidden');S.baselineStart=Date.now();S.elapsedIV=setInterval(()=>{document.getElementById('baseline-timer').textContent=((Date.now()-S.baselineStart)/1000).toFixed(1)+'s';},100);}
+function stopBaselineTimer(){clearInterval(S.elapsedIV);S.baselineWpm=Math.round((BASELINE_WC/((Date.now()-S.baselineStart)/1000))*60);show('screen-baseline-quiz');document.getElementById('baseline-wpm-display').textContent=S.baselineWpm+' WPM';const ctx=S.baselineWpm<150?'Below the average range — most adults read 200–250 WPM silently. Mnemo can help close this gap quickly.':S.baselineWpm<250?'Right in line with the average adult reader. Significant room to grow with RSVP.':S.baselineWpm<400?'Above average — you\'re already a stronger-than-typical natural reader.':'Strong natural reader — well above the typical range.';document.getElementById('baseline-wpm-context').textContent=ctx;S.answers={};S.locked=false;document.getElementById('baseline-feedback').classList.add('hidden');document.getElementById('baseline-submit-wrap').style.display='block';document.getElementById('baseline-submit-btn').disabled=true;document.getElementById('baseline-answer-hint').style.color='var(--text3)';buildQuiz('baseline-quiz-questions',BASELINE_Q,'b',updateBaselineSub);}
+function updateBaselineSub(){const rem=4-Object.keys(S.answers).filter(k=>k.startsWith('b')).length;const btn=document.getElementById('baseline-submit-btn'),hint=document.getElementById('baseline-answer-hint');if(rem>0){hint.textContent=rem+' question'+(rem>1?'s':'')+' remaining';hint.style.color='var(--text3)';btn.disabled=true;}else{hint.textContent='Ready to submit!';hint.style.color='var(--green)';btn.disabled=false;}}
+function submitBaselineQuiz(){if(S.locked||Object.keys(S.answers).filter(k=>k.startsWith('b')).length<4)return;S.locked=true;const correct=gradeQuiz('b',BASELINE_Q);S.totalCorrect+=correct;document.getElementById('baseline-submit-wrap').style.display='none';document.getElementById('baseline-score').textContent=correct+' / 4 correct';document.getElementById('baseline-score').style.color=correct>=3?'var(--green)':'var(--orange)';document.getElementById('baseline-msg').textContent=correct===4?'Perfect comprehension at your natural speed.':correct>=3?'Strong baseline.':correct>=2?'Decent baseline — RSVP will calibrate further.':'Read carefully in the RSVP phases ahead.';document.getElementById('baseline-feedback').classList.remove('hidden');}
+
+// ── LEVELS ────────────────────────────────────────────────────
+const LEVELS=[{wpm:250,words:[{w:"Every",n:0.50},{w:"experience",n:0.85},{w:"you",n:0.10},{w:"have",n:0.10},{w:"ever",n:0.55},{w:"had",n:0.10},{w:"is",n:0.05},{w:"stored",n:0.85},{w:"somewhere",n:0.70},{w:"in",n:0.05},{w:"your",n:0.10},{w:"brain,",n:0.85},{w:"but",n:0.05},{w:"not",n:0.55},{w:"all",n:0.30},{w:"memories",n:0.90},{w:"are",n:0.05},{w:"created",n:0.80},{w:"equal.",n:0.80},{w:"The",n:0.05},{w:"brain",n:0.90},{w:"sorts",n:0.85},{w:"information",n:0.85},{w:"into",n:0.20},{w:"two",n:0.55},{w:"main",n:0.75},{w:"systems:",n:0.85},{w:"short-term",n:0.90},{w:"memory,",n:0.90},{w:"which",n:0.20},{w:"holds",n:0.80},{w:"about",n:0.30},{w:"seven",n:0.80},{w:"items",n:0.80},{w:"at",n:0.05},{w:"once",n:0.65},{w:"for",n:0.05},{w:"a",n:0.05},{w:"matter",n:0.75},{w:"of",n:0.05},{w:"seconds,",n:0.80},{w:"and",n:0.05},{w:"long-term",n:0.90},{w:"memory,",n:0.90},{w:"which",n:0.20},{w:"can",n:0.15},{w:"last",n:0.75},{w:"a",n:0.05},{w:"lifetime.",n:0.90},{w:"The",n:0.05},{w:"transfer",n:0.90},{w:"from",n:0.15},{w:"short",n:0.75},{w:"to",n:0.05},{w:"long-term",n:0.90},{w:"memory",n:0.90},{w:"depends",n:0.85},{w:"heavily",n:0.80},{w:"on",n:0.05},{w:"repetition,",n:0.90},{w:"emotion,",n:0.85},{w:"and",n:0.05},{w:"relevance.",n:0.90},{w:"This",n:0.20},{w:"is",n:0.05},{w:"why",n:0.45},{w:"you",n:0.10},{w:"remember",n:0.85},{w:"your",n:0.10},{w:"first",n:0.70},{w:"day",n:0.70},{w:"at",n:0.05},{w:"a",n:0.05},{w:"new",n:0.60},{w:"school",n:0.80},{w:"but",n:0.05},{w:"forget",n:0.80},{w:"most",n:0.50},{w:"of",n:0.05},{w:"what",n:0.20},{w:"you",n:0.10},{w:"read",n:0.85},{w:"last",n:0.70},{w:"Tuesday.",n:0.80},{w:"Sleep",n:0.90},{w:"plays",n:0.80},{w:"a",n:0.05},{w:"critical",n:0.85},{w:"role:",n:0.80},{w:"during",n:0.45},{w:"deep",n:0.85},{w:"sleep,",n:0.85},{w:"the",n:0.05},{w:"brain",n:0.90},{w:"replays",n:0.90},{w:"and",n:0.05},{w:"consolidates",n:0.95},{w:"what",n:0.20},{w:"it",n:0.05},{w:"learned",n:0.85},{w:"during",n:0.45},{w:"the",n:0.05},{w:"day.",n:0.70}],questions:[{q:"How many items can short-term memory hold at once?",options:["A) About four","B) About seven","C) About twelve","D) Unlimited"],answer:"B"},{q:"What helps move information to long-term memory?",options:["A) Reading faster","B) Repetition, emotion, and relevance","C) Writing it down immediately","D) Sleeping right after learning"],answer:"B"},{q:"Why do you remember your first day at a new school?",options:["A) It was repeated many times","B) The brain stores all firsts automatically","C) Emotion and relevance strengthen the memory","D) Short-term memory converts automatically"],answer:"C"},{q:"What role does sleep play in memory?",options:["A) It clears unneeded memories","B) It speeds up short-term memory","C) The brain replays and consolidates what it learned during the day","D) It moves memories from long-term back to short-term"],answer:"C"}]},{wpm:300,words:[{w:"When",n:0.25},{w:"a",n:0.05},{w:"skilled",n:0.85},{w:"reader",n:0.85},{w:"moves",n:0.75},{w:"through",n:0.25},{w:"a",n:0.05},{w:"page,",n:0.75},{w:"their",n:0.15},{w:"eyes",n:0.85},{w:"do",n:0.15},{w:"not",n:0.55},{w:"glide",n:0.85},{w:"smoothly",n:0.80},{w:"across",n:0.55},{w:"the",n:0.05},{w:"text.",n:0.75},{w:"Instead,",n:0.70},{w:"they",n:0.10},{w:"jump",n:0.85},{w:"in",n:0.05},{w:"rapid",n:0.85},{w:"bursts",n:0.85},{w:"called",n:0.30},{w:"saccades,",n:0.95},{w:"pausing",n:0.85},{w:"briefly",n:0.80},{w:"at",n:0.05},{w:"fixed",n:0.80},{w:"points",n:0.80},{w:"called",n:0.30},{w:"fixations.",n:0.95},{w:"Each",n:0.40},{w:"fixation",n:0.90},{w:"lasts",n:0.75},{w:"roughly",n:0.50},{w:"200",n:0.85},{w:"to",n:0.05},{w:"250",n:0.85},{w:"milliseconds,",n:0.90},{w:"and",n:0.05},{w:"the",n:0.05},{w:"brain",n:0.90},{w:"can",n:0.15},{w:"only",n:0.55},{w:"extract",n:0.85},{w:"meaning",n:0.90},{w:"during",n:0.45},{w:"those",n:0.20},{w:"pauses.",n:0.80},{w:"The",n:0.05},{w:"key",n:0.80},{w:"constraint",n:0.90},{w:"on",n:0.05},{w:"reading",n:0.85},{w:"speed",n:0.90},{w:"is",n:0.05},{w:"therefore",n:0.65},{w:"not",n:0.55},{w:"mechanical",n:0.85},{w:"eye",n:0.80},{w:"speed",n:0.85},{w:"but",n:0.05},{w:"the",n:0.05},{w:"frequency",n:0.90},{w:"and",n:0.05},{w:"duration",n:0.90},{w:"of",n:0.05},{w:"fixations.",n:0.95},{w:"Slower",n:0.85},{w:"readers",n:0.85},{w:"fixate",n:0.90},{w:"more",n:0.50},{w:"often",n:0.65},{w:"and",n:0.05},{w:"for",n:0.05},{w:"longer,",n:0.80},{w:"and",n:0.05},{w:"they",n:0.10},{w:"also",n:0.30},{w:"regress",n:0.90},{w:"more",n:0.50},{w:"—",n:0.20},{w:"moving",n:0.70},{w:"their",n:0.15},{w:"eyes",n:0.80},{w:"backward",n:0.85},{w:"to",n:0.05},{w:"recheck",n:0.90},{w:"words",n:0.85},{w:"already",n:0.55},{w:"passed.",n:0.75},{w:"RSVP",n:0.95},{w:"technology",n:0.95},{w:"eliminates",n:0.90},{w:"both",n:0.40},{w:"problems",n:0.85},{w:"by",n:0.05},{w:"controlling",n:0.90},{w:"exactly",n:0.80},{w:"where",n:0.40},{w:"and",n:0.05},{w:"when",n:0.40},{w:"each",n:0.40},{w:"word",n:0.85},{w:"appears.",n:0.80}],questions:[{q:"What are saccades?",options:["A) Pauses during which the brain extracts meaning","B) Rapid jumps the eye makes between fixed points","C) Backward eye movements during rereading","D) The speed at which pupils dilate"],answer:"B"},{q:"What is the main constraint on reading speed?",options:["A) Mechanical speed of the eye","B) Working memory capacity","C) Frequency and duration of fixations","D) Processing speed in the visual cortex"],answer:"C"},{q:"What is regression in reading?",options:["A) A decline in reading skill over time","B) Moving eyes backward to recheck words already passed","C) Tendency to misread unfamiliar words","D) Re-reading paragraphs from the start"],answer:"B"},{q:"How does RSVP eliminate fixation problems?",options:["A) It widens the visual field","B) It trains eyes to make fewer saccades","C) It controls exactly where and when each word appears","D) It highlights key words to guide fixation"],answer:"C"}]},{wpm:400,words:[{w:"Attention",n:0.90},{w:"is",n:0.05},{w:"not",n:0.55},{w:"a",n:0.05},{w:"single",n:0.75},{w:"thing.",n:0.80},{w:"Scientists",n:0.85},{w:"who",n:0.20},{w:"study",n:0.80},{w:"the",n:0.05},{w:"mind",n:0.85},{w:"have",n:0.10},{w:"found",n:0.70},{w:"that",n:0.15},{w:"the",n:0.05},{w:"brain",n:0.90},{w:"uses",n:0.65},{w:"at",n:0.05},{w:"least",n:0.60},{w:"three",n:0.75},{w:"separate",n:0.85},{w:"attention",n:0.90},{w:"systems,",n:0.85},{w:"each",n:0.40},{w:"with",n:0.05},{w:"its",n:0.15},{w:"own",n:0.55},{w:"job.",n:0.80},{w:"One",n:0.35},{w:"system",n:0.80},{w:"helps",n:0.70},{w:"you",n:0.10},{w:"stay",n:0.75},{w:"alert",n:0.85},{w:"and",n:0.05},{w:"ready",n:0.75},{w:"to",n:0.05},{w:"respond.",n:0.80},{w:"A",n:0.05},{w:"second",n:0.70},{w:"helps",n:0.70},{w:"you",n:0.10},{w:"choose",n:0.80},{w:"what",n:0.20},{w:"to",n:0.05},{w:"focus",n:0.85},{w:"on",n:0.05},{w:"when",n:0.25},{w:"there",n:0.25},{w:"are",n:0.05},{w:"many",n:0.45},{w:"things",n:0.55},{w:"competing",n:0.85},{w:"for",n:0.05},{w:"your",n:0.10},{w:"notice.",n:0.80},{w:"The",n:0.05},{w:"third",n:0.70},{w:"system",n:0.80},{w:"helps",n:0.70},{w:"you",n:0.10},{w:"stay",n:0.75},{w:"on",n:0.05},{w:"a",n:0.05},{w:"task",n:0.85},{w:"without",n:0.60},{w:"drifting.",n:0.85},{w:"Reading",n:0.85},{w:"demands",n:0.85},{w:"all",n:0.30},{w:"three",n:0.75},{w:"at",n:0.05},{w:"once.",n:0.70},{w:"This",n:0.20},{w:"is",n:0.05},{w:"part",n:0.65},{w:"of",n:0.05},{w:"why",n:0.45},{w:"reading",n:0.85},{w:"when",n:0.25},{w:"tired",n:0.85},{w:"is",n:0.05},{w:"so",n:0.15},{w:"hard",n:0.80},{w:"—",n:0.20},{w:"the",n:0.05},{w:"alert",n:0.85},{w:"system",n:0.80},{w:"is",n:0.05},{w:"the",n:0.05},{w:"first",n:0.70},{w:"to",n:0.05},{w:"drop",n:0.80},{w:"when",n:0.25},{w:"you",n:0.10},{w:"are",n:0.05},{w:"worn",n:0.80},{w:"out,",n:0.75},{w:"which",n:0.20},{w:"makes",n:0.65},{w:"it",n:0.05},{w:"harder",n:0.80},{w:"to",n:0.05},{w:"follow",n:0.80},{w:"the",n:0.05},{w:"other",n:0.35},{w:"two.",n:0.65}],questions:[{q:"How many attention systems does the brain use?",options:["A) One","B) Two","C) Three","D) Four"],answer:"C"},{q:"What does the second attention system help you do?",options:["A) Stay alert and ready to respond","B) Choose what to focus on when many things compete for attention","C) Avoid drifting from a task","D) Process words faster"],answer:"B"},{q:"Why is reading when tired especially hard?",options:["A) The brain processes words more slowly","B) Long-term memory stops working","C) The alert system is first to drop when worn out","D) All three systems shut down at once"],answer:"C"},{q:"Reading demands which systems?",options:["A) Only the alert system","B) Only focus and task systems","C) All three attention systems at once","D) A fourth system not yet named"],answer:"C"}]},{wpm:500,words:[{w:"Comprehension",n:0.95},{w:"depends",n:0.85},{w:"on",n:0.05},{w:"the",n:0.05},{w:"brain's",n:0.85},{w:"ability",n:0.85},{w:"to",n:0.05},{w:"hold",n:0.80},{w:"multiple",n:0.80},{w:"pieces",n:0.80},{w:"of",n:0.05},{w:"information",n:0.85},{w:"in",n:0.05},{w:"working",n:0.85},{w:"memory",n:0.90},{w:"simultaneously",n:0.90},{w:"and",n:0.05},{w:"integrate",n:0.90},{w:"them",n:0.15},{w:"into",n:0.20},{w:"meaning.",n:0.90},{w:"Working",n:0.85},{w:"memory",n:0.90},{w:"is",n:0.05},{w:"famously",n:0.80},{w:"limited,",n:0.80},{w:"holding",n:0.80},{w:"roughly",n:0.55},{w:"four",n:0.80},{w:"chunks",n:0.90},{w:"at",n:0.05},{w:"a",n:0.05},{w:"time",n:0.70},{w:"according",n:0.55},{w:"to",n:0.05},{w:"cognitive",n:0.90},{w:"psychologist",n:0.90},{w:"Nelson",n:0.85},{w:"Cowan.",n:0.90},{w:"The",n:0.05},{w:"critical",n:0.85},{w:"insight",n:0.90},{w:"is",n:0.05},{w:"that",n:0.15},{w:"a",n:0.05},{w:"chunk",n:0.90},{w:"can",n:0.15},{w:"be",n:0.05},{w:"a",n:0.05},{w:"single",n:0.75},{w:"word",n:0.85},{w:"or",n:0.05},{w:"an",n:0.05},{w:"entire",n:0.75},{w:"phrase,",n:0.80},{w:"depending",n:0.80},{w:"on",n:0.05},{w:"the",n:0.05},{w:"reader's",n:0.85},{w:"familiarity",n:0.90},{w:"with",n:0.05},{w:"the",n:0.05},{w:"material.",n:0.85},{w:"Expert",n:0.85},{w:"readers",n:0.85},{w:"in",n:0.05},{w:"their",n:0.15},{w:"own",n:0.55},{w:"field",n:0.80},{w:"process",n:0.85},{w:"domain-specific",n:0.95},{w:"language",n:0.90},{w:"in",n:0.05},{w:"large",n:0.75},{w:"chunks,",n:0.85},{w:"which",n:0.20},{w:"is",n:0.05},{w:"why",n:0.45},{w:"a",n:0.05},{w:"physician",n:0.90},{w:"reads",n:0.80},{w:"a",n:0.05},{w:"clinical",n:0.90},{w:"report",n:0.85},{w:"faster",n:0.80},{w:"than",n:0.10},{w:"a",n:0.05},{w:"layperson.",n:0.90},{w:"RSVP",n:0.95},{w:"systems",n:0.85},{w:"that",n:0.15},{w:"adapt",n:0.90},{w:"timing",n:0.85},{w:"to",n:0.05},{w:"semantic",n:0.95},{w:"weight",n:0.90},{w:"mimic",n:0.90},{w:"this",n:0.15},{w:"expert",n:0.85},{w:"chunking",n:0.95},{w:"advantage",n:0.90},{w:"for",n:0.05},{w:"any",n:0.30},{w:"reader.",n:0.80}],questions:[{q:"How many chunks can working memory hold at once?",options:["A) Two","B) Four","C) Seven","D) Ten"],answer:"B"},{q:"What determines the size of a cognitive chunk?",options:["A) The reader's IQ","B) Font size and layout","C) Familiarity with the material","D) Length of individual words"],answer:"C"},{q:"Why does a physician read clinical reports faster than a layperson?",options:["A) Higher raw reading speed","B) Medical training improves visual acuity","C) They process domain-specific language in large chunks","D) They skip unfamiliar terms"],answer:"C"},{q:"How do adaptive RSVP systems mimic expert chunking?",options:["A) Grouping words into visual clusters","B) Adapting display timing to semantic weight","C) Skipping filler words","D) Presenting sentences rather than words"],answer:"B"}]},{wpm:650,words:[{w:"Speed",n:0.85},{w:"reading",n:0.90},{w:"has",n:0.10},{w:"a",n:0.05},{w:"credibility",n:0.90},{w:"problem.",n:0.90},{w:"Courses",n:0.85},{w:"claiming",n:0.80},{w:"to",n:0.05},{w:"train",n:0.85},{w:"readers",n:0.85},{w:"to",n:0.05},{w:"1,000",n:0.90},{w:"words",n:0.80},{w:"per",n:0.20},{w:"minute",n:0.80},{w:"or",n:0.05},{w:"more",n:0.50},{w:"have",n:0.10},{w:"been",n:0.10},{w:"consistently",n:0.85},{w:"debunked",n:0.90},{w:"by",n:0.05},{w:"cognitive",n:0.90},{w:"scientists.",n:0.90},{w:"A",n:0.05},{w:"landmark",n:0.90},{w:"2016",n:0.90},{w:"review",n:0.85},{w:"in",n:0.05},{w:"Psychological",n:0.90},{w:"Science",n:0.85},{w:"concluded",n:0.85},{w:"that",n:0.15},{w:"the",n:0.05},{w:"fundamental",n:0.90},{w:"tradeoff",n:0.90},{w:"between",n:0.30},{w:"speed",n:0.85},{w:"and",n:0.05},{w:"comprehension",n:0.95},{w:"cannot",n:0.85},{w:"be",n:0.05},{w:"fully",n:0.70},{w:"eliminated",n:0.90},{w:"—",n:0.20},{w:"only",n:0.55},{w:"managed.",n:0.85},{w:"Gains",n:0.85},{w:"from",n:0.15},{w:"speed",n:0.85},{w:"reading",n:0.85},{w:"programs",n:0.85},{w:"primarily",n:0.80},{w:"reflect",n:0.85},{w:"improved",n:0.85},{w:"skimming,",n:0.90},{w:"not",n:0.55},{w:"genuine",n:0.85},{w:"increases",n:0.85},{w:"in",n:0.05},{w:"processing",n:0.90},{w:"speed.",n:0.85},{w:"However,",n:0.65},{w:"the",n:0.05},{w:"same",n:0.55},{w:"researchers",n:0.85},{w:"acknowledged",n:0.85},{w:"that",n:0.15},{w:"technology-assisted",n:0.95},{w:"systems",n:0.85},{w:"that",n:0.15},{w:"eliminate",n:0.90},{w:"unnecessary",n:0.90},{w:"eye",n:0.80},{w:"movements",n:0.85},{w:"represent",n:0.85},{w:"a",n:0.05},{w:"legitimate",n:0.90},{w:"category",n:0.85},{w:"of",n:0.05},{w:"improvement.",n:0.90},{w:"Skimming",n:0.90},{w:"sacrifices",n:0.90},{w:"depth,",n:0.85},{w:"while",n:0.30},{w:"optimized",n:0.90},{w:"display",n:0.85},{w:"reduces",n:0.85},{w:"friction",n:0.90},{w:"without",n:0.60},{w:"sacrificing",n:0.90},{w:"the",n:0.05},{w:"semantic",n:0.95},{w:"content",n:0.85},{w:"the",n:0.05},{w:"reader",n:0.85},{w:"encounters.",n:0.85}],questions:[{q:"What did the 2016 Psychological Science review conclude?",options:["A) Speed-comprehension tradeoff can be eliminated","B) It only applies to non-native readers","C) It cannot be fully eliminated, only managed","D) It is primarily a motivation problem"],answer:"C"},{q:"What do speed reading programs primarily improve?",options:["A) Genuine processing speed","B) Long-term retention","C) Skimming rather than true comprehension","D) Eye muscle efficiency"],answer:"C"},{q:"What improvement did researchers acknowledge as legitimate?",options:["A) Memorization techniques","B) Technology that eliminates unnecessary eye movements","C) Meditation-based focus training","D) Vocabulary expansion"],answer:"B"},{q:"How does the passage distinguish optimized display from skimming?",options:["A) Skimming is faster but equally accurate","B) Optimized display sacrifices depth","C) Skimming sacrifices depth; optimized display reduces friction without losing content","D) No meaningful distinction"],answer:"C"}]},{wpm:800,words:[{w:"The",n:0.05},{w:"insight",n:0.90},{w:"behind",n:0.65},{w:"adaptive",n:0.90},{w:"reading",n:0.90},{w:"technology",n:0.90},{w:"is",n:0.05},{w:"that",n:0.15},{w:"not",n:0.55},{w:"all",n:0.30},{w:"words",n:0.85},{w:"carry",n:0.85},{w:"equal",n:0.80},{w:"informational",n:0.95},{w:"weight.",n:0.90},{w:"Articles,",n:0.80},{w:"prepositions,",n:0.85},{w:"and",n:0.05},{w:"conjunctions",n:0.85},{w:"serve",n:0.75},{w:"as",n:0.05},{w:"grammatical",n:0.90},{w:"scaffolding",n:0.95},{w:"—",n:0.20},{w:"necessary",n:0.85},{w:"for",n:0.05},{w:"structure",n:0.85},{w:"but",n:0.05},{w:"low",n:0.75},{w:"in",n:0.05},{w:"semantic",n:0.95},{w:"content.",n:0.90},{w:"Content",n:0.85},{w:"words",n:0.85},{w:"—",n:0.20},{w:"nouns,",n:0.90},{w:"verbs,",n:0.90},{w:"and",n:0.05},{w:"domain-specific",n:0.95},{w:"terms",n:0.85},{w:"—",n:0.20},{w:"carry",n:0.85},{w:"most",n:0.55},{w:"of",n:0.05},{w:"the",n:0.05},{w:"meaning",n:0.90},{w:"and",n:0.05},{w:"require",n:0.85},{w:"more",n:0.50},{w:"processing",n:0.90},{w:"time.",n:0.85},{w:"A",n:0.05},{w:"system",n:0.85},{w:"that",n:0.15},{w:"displays",n:0.85},{w:"the",n:0.05},{w:"same",n:0.55},{w:"duration",n:0.90},{w:"for",n:0.05},{w:"every",n:0.45},{w:"word",n:0.85},{w:"is",n:0.05},{w:"fundamentally",n:0.90},{w:"misaligned",n:0.95},{w:"with",n:0.05},{w:"how",n:0.40},{w:"the",n:0.05},{w:"brain",n:0.90},{w:"processes",n:0.90},{w:"language.",n:0.90},{w:"Mnemo's",n:0.95},{w:"algorithm",n:0.95},{w:"scores",n:0.90},{w:"every",n:0.45},{w:"word",n:0.85},{w:"across",n:0.55},{w:"three",n:0.75},{w:"dimensions:",n:0.90},{w:"length",n:0.90},{w:"as",n:0.05},{w:"a",n:0.05},{w:"proxy",n:0.90},{w:"for",n:0.05},{w:"complexity,",n:0.90},{w:"necessity",n:0.95},{w:"to",n:0.05},{w:"the",n:0.05},{w:"passage's",n:0.90},{w:"central",n:0.85},{w:"meaning,",n:0.90},{w:"and",n:0.05},{w:"punctuation",n:0.90},{w:"context",n:0.90},{w:"as",n:0.05},{w:"a",n:0.05},{w:"signal",n:0.85},{w:"for",n:0.05},{w:"syntactic",n:0.95},{w:"boundaries.",n:0.90}],questions:[{q:"What does the passage call articles, prepositions, and conjunctions?",options:["A) High-priority semantic anchors","B) Grammatical scaffolding low in semantic content","C) The most important words for comprehension","D) Words that should be skipped in RSVP"],answer:"B"},{q:"Why do content words require more processing time?",options:["A) They are longer","B) They appear less frequently","C) They carry most of the meaning","D) They trigger subvocalization more strongly"],answer:"C"},{q:"What three dimensions does Mnemo's algorithm use?",options:["A) Frequency, syllable count, and grammar role","B) Font size, position, and reading history","C) Length, necessity to meaning, and punctuation context","D) Emotional valence, abstraction, and word origin"],answer:"C"},{q:"What does the passage say about equal-duration display systems?",options:["A) Effective for casual reading","B) Work well for high-frequency vocabulary","C) Fundamentally misaligned with how the brain processes language","D) Improve comprehension for readers with dyslexia"],answer:"C"}]},{wpm:1000,words:[{w:"As",n:0.15},{w:"the",n:0.05},{w:"volume",n:0.85},{w:"of",n:0.05},{w:"information",n:0.90},{w:"produced",n:0.80},{w:"globally",n:0.85},{w:"continues",n:0.80},{w:"to",n:0.05},{w:"accelerate,",n:0.85},{w:"the",n:0.05},{w:"competitive",n:0.90},{w:"advantage",n:0.90},{w:"of",n:0.05},{w:"reading",n:0.85},{w:"faster",n:0.85},{w:"with",n:0.05},{w:"full",n:0.75},{w:"comprehension",n:0.95},{w:"becomes",n:0.75},{w:"increasingly",n:0.85},{w:"significant.",n:0.90},{w:"Research",n:0.85},{w:"from",n:0.15},{w:"Harvard",n:0.90},{w:"Business",n:0.85},{w:"School",n:0.85},{w:"suggests",n:0.75},{w:"that",n:0.15},{w:"professionals",n:0.90},{w:"who",n:0.20},{w:"process",n:0.85},{w:"information",n:0.90},{w:"efficiently",n:0.90},{w:"demonstrate",n:0.90},{w:"measurably",n:0.90},{w:"better",n:0.75},{w:"decision-making",n:0.95},{w:"outcomes",n:0.90},{w:"across",n:0.55},{w:"high-stakes",n:0.95},{w:"domains",n:0.85},{w:"including",n:0.55},{w:"law,",n:0.85},{w:"medicine,",n:0.85},{w:"and",n:0.05},{w:"finance.",n:0.90},{w:"Beyond",n:0.70},{w:"professional",n:0.85},{w:"performance,",n:0.85},{w:"there",n:0.25},{w:"is",n:0.05},{w:"an",n:0.05},{w:"equity",n:0.90},{w:"dimension:",n:0.90},{w:"students",n:0.85},{w:"who",n:0.20},{w:"read",n:0.85},{w:"slowly",n:0.85},{w:"spend",n:0.80},{w:"disproportionately",n:0.90},{w:"more",n:0.50},{w:"hours",n:0.80},{w:"on",n:0.05},{w:"equivalent",n:0.85},{w:"material,",n:0.85},{w:"compressing",n:0.90},{w:"their",n:0.15},{w:"time",n:0.80},{w:"for",n:0.05},{w:"synthesis,",n:0.90},{w:"rest,",n:0.85},{w:"and",n:0.05},{w:"creative",n:0.85},{w:"work.",n:0.85},{w:"Adaptive",n:0.90},{w:"reading",n:0.85},{w:"technology",n:0.90},{w:"therefore",n:0.70},{w:"represents",n:0.85},{w:"a",n:0.05},{w:"meaningful",n:0.90},{w:"reallocation",n:0.95},{w:"of",n:0.05},{w:"the",n:0.05},{w:"most",n:0.55},{w:"finite",n:0.90},{w:"human",n:0.80},{w:"resource:",n:0.90},{w:"time.",n:0.90},{w:"The",n:0.05},{w:"question",n:0.80},{w:"is",n:0.05},{w:"no",n:0.45},{w:"longer",n:0.70},{w:"whether",n:0.55},{w:"reading",n:0.85},{w:"can",n:0.15},{w:"be",n:0.05},{w:"optimized",n:0.90},{w:"—",n:0.20},{w:"cognitive",n:0.90},{w:"science",n:0.90},{w:"clearly",n:0.80},{w:"says",n:0.65},{w:"it",n:0.05},{w:"can.",n:0.75},{w:"The",n:0.05},{w:"question",n:0.80},{w:"is",n:0.05},{w:"who",n:0.40},{w:"will",n:0.40},{w:"access",n:0.85},{w:"the",n:0.05},{w:"tools",n:0.85},{w:"to",n:0.05},{w:"do",n:0.40},{w:"so",n:0.25},{w:"first.",n:0.80}],questions:[{q:"What does Harvard Business School research suggest?",options:["A) Slower readers make better decisions","B) Efficient information processors show better decision-making outcomes","C) Reading speed only matters in technical fields","D) Professionals prefer audio over written material"],answer:"B"},{q:"What equity dimension does the passage raise?",options:["A) Slower readers pay more for materials","B) Technology is only available to wealthy institutions","C) Slower readers spend disproportionately more hours on the same material","D) Non-native speakers are disadvantaged by RSVP"],answer:"C"},{q:"How does the passage characterize adaptive reading technology?",options:["A) A distraction from deep thinking","B) A meaningful reallocation of the most finite human resource: time","C) A temporary solution until neural interfaces emerge","D) A supplement to traditional reading"],answer:"B"},{q:"What does cognitive science confirm?",options:["A) Reading cannot improve after adolescence","B) Subvocalization is essential","C) Reading can be optimized","D) Working memory sets a hard ceiling on speed"],answer:"C"}]}];
+
+// ── STATE ─────────────────────────────────────────────────────
+let S={baselineStart:0,baselineWpm:0,level:0,levelScores:[],totalQ:4,totalCorrect:0,totalWords:BASELINE_WC,bestWpm:0,answers:{},locked:false,elapsedIV:null,elapsed:0,rsvpTO:null,feedback:{likelyUse:0,weightAccuracy:0,comprehendRating:0,usedFor:[],good:'',bad:''}};
+
+// ── UTILS ─────────────────────────────────────────────────────
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo({top:0,behavior:'smooth'});}
+function lScore(w){const c=w.replace(/[^a-zA-Z]/g,'').length;if(c<=1)return 0.05;if(c>=12)return 1.0;return Math.round((c-1)/11*100)/100;}
+function pScore(w){return PUNC[w[w.length-1]]||0;}
+function combo(w,n){return 0.40*lScore(w)+0.35*Math.max(0,Math.min(1,n))+0.25*pScore(w);}
+
+function buildQuiz(cid,questions,prefix,onChange){const c=document.getElementById(cid);c.innerHTML='';questions.forEach((q,qi)=>{const wrap=document.createElement('div');wrap.style.cssText='margin-bottom:1.25rem;padding:1.25rem;background:var(--surface2);border:1px solid rgba(90,197,153,0.18);border-radius:12px;';const lbl=document.createElement('p');lbl.style.cssText='font-weight:500;margin-bottom:0.75rem;font-size:0.93rem;color:var(--text);line-height:1.5;';lbl.textContent=(qi+1)+'. '+q.q;wrap.appendChild(lbl);q.options.forEach((opt,oi)=>{const letter=['A','B','C','D'][oi];const b=document.createElement('button');b.className='q-option';b.textContent=opt;b.dataset.qi=prefix+qi;b.dataset.letter=letter;b.addEventListener('click',function(){if(S.locked)return;document.querySelectorAll('[data-qi="'+prefix+qi+'"]').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');S.answers[prefix+qi]=letter;if(onChange)onChange();});wrap.appendChild(b);});c.appendChild(wrap);});}
+function gradeQuiz(prefix,questions){let correct=0;questions.forEach((q,qi)=>{const sel=S.answers[prefix+qi],right=q.answer,ok=sel===right;if(ok)correct++;document.querySelectorAll('[data-qi="'+prefix+qi+'"]').forEach(btn=>{btn.classList.add('locked');const l=btn.dataset.letter;if(l===right){btn.classList.remove('selected');btn.classList.add('correct');}else if(l===sel&&!ok){btn.classList.remove('selected');btn.classList.add('wrong');}});});return correct;}
+
+function buildDots(){const c=document.getElementById('step-dots');c.innerHTML='';for(let i=0;i<LEVELS.length;i++){const d=document.createElement('div');d.className='dot'+(i===0?' active':'');d.id='dot-'+i;c.appendChild(d);}}
+function updateDots(){for(let i=0;i<LEVELS.length;i++){const d=document.getElementById('dot-'+i);if(!d)return;d.className='dot'+(i<S.level?' done':i===S.level?' active':'');}}
+function startRSVP(){S.level=0;buildDots();loadLevel();}
+function loadLevel(){const lv=LEVELS[S.level];show('screen-read');document.getElementById('read-wpm-pill').textContent=lv.wpm+' WPM';document.getElementById('read-level-label').textContent='Level '+(S.level+1)+' of '+LEVELS.length;document.getElementById('main-progress').style.width=(S.level/LEVELS.length*100)+'%';document.getElementById('rsvp-word').innerHTML='—';['bar-length','bar-nec','bar-punc'].forEach(id=>document.getElementById(id).style.width='0%');['val-length','val-nec','val-punc'].forEach(id=>document.getElementById(id).textContent='—');document.getElementById('rsvp-counter').textContent='0/'+lv.words.length;document.getElementById('rsvp-timer').textContent='0.0s';document.getElementById('read-countdown').classList.add('hidden');S.totalWords+=lv.words.length;updateDots();startCountdown(lv.wpm);}
+function startCountdown(wpm){const el=document.getElementById('read-countdown'),n=document.getElementById('countdown-num');el.classList.remove('hidden');let c=3;n.textContent=c;const iv=setInterval(()=>{c--;if(c<=0){clearInterval(iv);el.classList.add('hidden');runRSVP(wpm);}else n.textContent=c;},800);}
+function runRSVP(wpm){const lv=LEVELS[S.level],words=lv.words,baseMs=60000/wpm;S.elapsed=0;clearInterval(S.elapsedIV);S.elapsedIV=setInterval(()=>{S.elapsed+=0.1;document.getElementById('rsvp-timer').textContent=S.elapsed.toFixed(1)+'s';},100);let idx=0;const wEl=document.getElementById('rsvp-word'),cEl=document.getElementById('rsvp-counter');const bL=document.getElementById('bar-length'),bN=document.getElementById('bar-nec'),bP=document.getElementById('bar-punc');const vL=document.getElementById('val-length'),vN=document.getElementById('val-nec'),vP=document.getElementById('val-punc');function next(){if(idx>=words.length){clearInterval(S.elapsedIV);wEl.innerHTML='<span style="color:var(--green);">✓</span>';setTimeout(()=>showQuiz(),700);return;}const{w,n}=words[idx];const L=lScore(w),N=n,P=pScore(w),cs=combo(w,n);wEl.innerHTML=renderWordHTML(w,cs);bL.style.width=Math.round(L*100)+'%';bN.style.width=Math.round(N*100)+'%';bP.style.width=Math.round(P*100)+'%';vL.textContent=L.toFixed(2);vN.textContent=N.toFixed(2);vP.textContent=P.toFixed(2);cEl.textContent=(idx+1)+'/'+words.length;idx++;S.rsvpTO=setTimeout(next,Math.round(baseMs*(0.35+cs*1.65)));}next();}
+function showQuiz(){S.answers={};S.locked=false;show('screen-quiz');const lv=LEVELS[S.level];document.getElementById('quiz-level-label').textContent='Level '+(S.level+1)+' — '+lv.wpm+' WPM';document.getElementById('quiz-progress').style.width=((S.level+1)/LEVELS.length*100)+'%';document.getElementById('quiz-feedback').classList.add('hidden');document.getElementById('submit-wrap').style.display='block';document.getElementById('submit-quiz-btn').disabled=true;document.getElementById('answer-hint').textContent='Answer all 4 questions to continue';document.getElementById('answer-hint').style.color='var(--text3)';buildQuiz('quiz-questions',lv.questions,'r'+S.level,updateRSVPSub);}
+function updateRSVPSub(){const prefix='r'+S.level;const rem=4-Object.keys(S.answers).filter(k=>k.startsWith(prefix)).length;const btn=document.getElementById('submit-quiz-btn'),hint=document.getElementById('answer-hint');if(rem>0){hint.textContent=rem+' question'+(rem>1?'s':'')+' remaining';hint.style.color='var(--text3)';btn.disabled=true;}else{hint.textContent='Ready to submit!';hint.style.color='var(--green)';btn.disabled=false;}}
+function submitQuiz(){if(S.locked)return;const prefix='r'+S.level;if(Object.keys(S.answers).filter(k=>k.startsWith(prefix)).length<4)return;S.locked=true;const lv=LEVELS[S.level];const correct=gradeQuiz(prefix,lv.questions);S.levelScores.push({wpm:lv.wpm,correct});S.totalQ+=4;S.totalCorrect+=correct;document.getElementById('submit-wrap').style.display='none';const acc=correct/4,passed=acc>=0.75;document.getElementById('feedback-score').textContent=correct+' / 4 correct';document.getElementById('feedback-score').style.color=passed?'var(--green)':'var(--danger)';if(passed){S.bestWpm=lv.wpm;document.getElementById('feedback-msg').textContent=correct===4?'Perfect comprehension.':'3 of 4 — cleared the bar. Moving up.';}else{document.getElementById('feedback-msg').textContent='Got '+correct+' of 4 — need 3 to advance. This marks your RSVP ceiling.';}document.getElementById('quiz-feedback').classList.remove('hidden');const nBtn=document.getElementById('next-btn');const isEnd=!passed||S.level>=LEVELS.length-1;nBtn.textContent=isEnd?'Continue to feedback →':'Next level →';nBtn.onclick=isEnd?()=>show('screen-feedback'):()=>{S.level++;loadLevel();};}
+
+const useForSet=new Set();
+function setLikert(key,val,el){S.feedback[key==='use'?'likelyUse':key==='weight'?'weightAccuracy':'comprehendRating']=val;document.querySelectorAll('#likert-'+key+' .likert-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
+function toggleUseFor(el,val){if(useForSet.has(val)){useForSet.delete(val);el.classList.remove('selected');}else{useForSet.add(val);el.classList.add('selected');}S.feedback.usedFor=[...useForSet];}
+
+async function submitFeedbackAndShow(){
+  S.feedback.good=document.getElementById('fb-good').value;
+  S.feedback.bad=document.getElementById('fb-bad').value;
+  const statusEl=document.getElementById('save-status-msg');
+  statusEl.innerHTML='<span style="color:var(--text3);font-size:0.82rem;">Saving your results...</span>';
+  try {
+    await saveSubmission();
+    statusEl.innerHTML='<span class="save-status save-ok">✓ Results saved successfully</span>';
+  } catch(e) {
+    statusEl.innerHTML='<span class="save-status save-err">⚠ Could not save to database — check your Supabase config</span>';
+    console.error('Save error:', e);
+  }
+  setTimeout(()=>showResults(), 800);
+}
+
+async function saveSubmission(){
+  const passed=S.levelScores.filter(s=>s.correct/4>=0.75).length;
+  const avgAcc=S.totalQ>0?Math.round(S.totalCorrect/S.totalQ*100):0;
+  const record={
+    date: new Date().toLocaleDateString(),
+    age: aboutData.age,
+    education: aboutData.education,
+    field: aboutData.field,
+    goal: aboutData.goal,
+    wpd_range: aboutData.wpd_range,
+    baseline_wpm: S.baselineWpm,
+    best_wpm: S.bestWpm,
+    levels_passed: passed,
+    avg_accuracy: avgAcc,
+    likely_use: S.feedback.likelyUse,
+    weight_accuracy: S.feedback.weightAccuracy,
+    comprehend_rating: S.feedback.comprehendRating,
+    used_for: S.feedback.usedFor.join(', '),
+    what_worked: S.feedback.good,
+    what_didnt: S.feedback.bad
+  };
+  await supabaseInsert(record);
+}
+
+function showResults(){
+  show('screen-result');
+  const best=S.bestWpm||S.baselineWpm;
+  const passed=S.levelScores.filter(s=>s.correct/4>=0.75).length;
+  const avgAcc=S.totalQ>0?Math.round(S.totalCorrect/S.totalQ*100):0;
+  const wpdVal=parseInt(aboutData.wpd_range)||2500;
+  document.getElementById('result-wpm').textContent=best;
+  document.getElementById('r-baseline-wpm').textContent=S.baselineWpm;
+  document.getElementById('r-rsvp-wpm').textContent=S.bestWpm||'—';
+  document.getElementById('r-levels').textContent=passed;
+  document.getElementById('r-accuracy').textContent=avgAcc+'%';
+  if(S.bestWpm>0&&S.bestWpm>S.baselineWpm){
+    const mult=(S.bestWpm/S.baselineWpm).toFixed(1);
+    document.getElementById('r-multiplier').textContent=mult+'×';
+    const savedMinDay=Math.round(wpdVal/S.baselineWpm-wpdVal/S.bestWpm);
+    document.getElementById('r-week').textContent=((savedMinDay*7)/60).toFixed(1)+'h';
+    document.getElementById('r-year').textContent=Math.round(savedMinDay*365/60/24)+'d';
+  }else{document.getElementById('r-multiplier').textContent='—';document.getElementById('r-week').textContent='—';document.getElementById('r-year').textContent='—';}
+  const linearPct=getPct(S.baselineWpm);
+  const mnemoPct=getPct(S.bestWpm>0?S.bestWpm:S.baselineWpm);
+  document.getElementById('r-pct-linear').textContent=linearPct.label;
+  document.getElementById('r-pct-mnemo').textContent=mnemoPct.label;
+  setTimeout(()=>{document.getElementById('r-pct-bar-linear').style.width=Math.min(linearPct.pct,100)+'%';document.getElementById('r-pct-bar-mnemo').style.width=Math.min(mnemoPct.pct,100)+'%';},350);
+  const COMP={1:"A solid starting point — Mnemo will build from here.",2:"Above average. You're already outpacing most readers.",4:"Strong — well ahead of the majority.",6:"Exceptional. Very few sustain comprehension at this pace.",7:"Elite. You're at the outer edge of what human reading can do."};
+  let compliment='You\'ve completed the Mnemo assessment.';
+  const keys=Object.keys(COMP).map(Number).sort((a,b)=>b-a);
+  for(const k of keys){if(passed>=k){compliment=COMP[k];break;}}
+  document.getElementById('result-compliment').textContent='"'+compliment+'"';
+  const desc=best<=300?"Mnemo will calibrate to your baseline and build progressively — most users in this range see 2–3× gains within their first month.":best<=500?"You're at a solid baseline. Mnemo's adaptive weighting will push your ceiling while preserving comprehension depth.":best<=800?"Your reading speed is already advanced. Mnemo will fine-tune timing across all three dimensions to match your semantic processing rate.":"You're an elite reader. Mnemo will calibrate to your exceptional baseline, and your data will help train the weighting model across all user profiles.";
+  document.getElementById('r-mnemo-desc').textContent=desc;
+}
+</script>
+</body>
+</html>
